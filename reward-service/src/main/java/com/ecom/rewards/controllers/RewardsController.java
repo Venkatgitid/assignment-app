@@ -1,16 +1,14 @@
 package com.ecom.rewards.controllers;
 
-import com.ecom.rewards.models.CustomerTransactionDto;
+import com.ecom.rewards.dto.CustomerTransactionDto;
+import com.ecom.rewards.dto.RewardsReqDto;
 import com.ecom.rewards.services.RewardsService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -27,6 +25,16 @@ public class RewardsController {
 
     @Autowired
     private RewardsService rewardsService;
+
+    @GetMapping("/points/{month}/{year}")
+    public ResponseEntity<Object> processRewardPoints(@Valid RewardsReqDto rewardsReqDto){
+        Map<String, Double> rewardPoints = rewardsService.getRewardsByMonthAndYear(rewardsReqDto.getMonth(), rewardsReqDto.getYear());
+
+        var response = new ArrayList<>();
+        rewardPoints.forEach((custId, totalRewards) -> response.add(new RewardResponseDetails(custId, totalRewards)));
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/cal-points")
     public ResponseEntity<Object> processRewardPoints(@Valid @RequestBody CustomerTransactionDto customerTransactionDto,

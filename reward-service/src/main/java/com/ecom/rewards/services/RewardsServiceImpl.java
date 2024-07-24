@@ -1,17 +1,40 @@
 package com.ecom.rewards.services;
 
-import com.ecom.rewards.models.CustomerTransactionDto;
+import com.ecom.rewards.exceptions.CustomerRewardsNotFoundException;
+import com.ecom.rewards.models.CustomerRewards;
+import com.ecom.rewards.dto.CustomerTransactionDto;
+import com.ecom.rewards.repositories.CustomerRewardsRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class RewardsServiceImpl implements RewardsService{
 
+    private final CustomerRewardsRepository rewardsRepository;
+
+    public RewardsServiceImpl(CustomerRewardsRepository rewardsRepository) {
+        this.rewardsRepository = rewardsRepository;
+    }
+
     public double processRewards(CustomerTransactionDto customerTransactionDto) {
-        return calculateRewardPoints(customerTransactionDto.getTotalInvoiceAmount());
+        double rewardPoints = calculateRewardPoints(customerTransactionDto.getTotalInvoiceAmount());
+        CustomerRewards customerRewards = createCustomerRewardsFrom(customerTransactionDto);
+        customerRewards.setRewardsPoint(rewardPoints);
+        rewardsRepository.save(customerRewards);
+        return rewardPoints;
+    }
+
+    private CustomerRewards createCustomerRewardsFrom(CustomerTransactionDto customerTransactionDto) {
+        return CustomerRewards.builder()
+                .customerId(customerTransactionDto.getCustomerId())
+                .invoiceId(customerTransactionDto.getInvoiceId())
+                .invoiceAmount(customerTransactionDto.getTotalInvoiceAmount())
+                .invoiceDate(customerTransactionDto.getInvoiceDate())
+                .build();
     }
 
     @Override
@@ -23,6 +46,17 @@ public class RewardsServiceImpl implements RewardsService{
             totalRewards.computeIfAbsent(txn.getCustomerId(), (cid) -> rewards);
         });
         return totalRewards;
+    }
+
+    @Override
+    public Map<String, Double> getRewardsByMonthAndYear(int month, int year) {
+        List<CustomerRewards> customerRewards = rewardsRepository.findRewardPointsByMonthAndYear(month, year);
+        if (!customerRewards.isEmpty()) {
+            return customerRewards.stream()
+                    .collect(Collectors.groupingBy(CustomerRewards::getCustomerId, Collectors.summingDouble(CustomerRewards::getRewardsPoint)));
+        } else {
+            throw new CustomerRewardsNotFoundException("No Records Found for the given Month and Year");
+        }
     }
 
     private double calculateRewardPoints(Double totalInvoiceAmount) {

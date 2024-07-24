@@ -1,6 +1,6 @@
 package com.ecom.rewards.services;
 
-import com.ecom.rewards.models.CustomerTransactionDto;
+import com.ecom.rewards.dto.CustomerTransactionDto;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;

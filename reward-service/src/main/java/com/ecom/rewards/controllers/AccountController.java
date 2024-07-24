@@ -1,8 +1,8 @@
 package com.ecom.rewards.controllers;
 
 import com.ecom.rewards.models.AppUser;
-import com.ecom.rewards.models.LoginDto;
-import com.ecom.rewards.models.RegisterDto;
+import com.ecom.rewards.dto.LoginDto;
+import com.ecom.rewards.dto.RegisterDto;
 import com.ecom.rewards.repositories.AppUserRepository;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import jakarta.validation.Valid;
