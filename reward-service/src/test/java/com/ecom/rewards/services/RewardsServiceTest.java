@@ -1,13 +1,14 @@
 package com.ecom.rewards.services;
 
 import com.ecom.rewards.dto.CustomerTransactionDto;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import com.ecom.rewards.models.CustomerRewards;
+import com.ecom.rewards.repositories.CustomerRewardsRepository;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
@@ -17,17 +18,29 @@ import java.util.Map;
 @SpringBootTest
 class RewardsServiceTest {
 
-    @InjectMocks
+    @Mock
+    private CustomerRewardsRepository rewardsRepository;
     private RewardsServiceImpl rewardsService;
-
-    private static CustomerTransactionDto customerTransactionDto;
+    private AutoCloseable autoCloseable;
+    private CustomerTransactionDto customerTransactionDto;
 
     @BeforeAll
-    public static void setup() {
+    static void init() {
+    }
+
+    @BeforeEach
+    void setup() {
+        autoCloseable = MockitoAnnotations.openMocks(this);
+        rewardsService = new RewardsServiceImpl(rewardsRepository);
         customerTransactionDto = CustomerTransactionDto.builder()
                 .customerId("C123")
                 .invoiceId(12345L)
                 .build();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        autoCloseable.close();
     }
 
     @DisplayName("Test the process reward calculation method with diff totalInvoiceAmount")
@@ -64,5 +77,24 @@ class RewardsServiceTest {
         Assertions.assertEquals(99D, rewardPoints.get("C123"));
         Assertions.assertEquals(91D, rewardPoints.get("C777"));
 
+    }
+
+    @DisplayName("Test to fetch the reward details by month and year")
+    @Test
+    void getRewardsByMonthAndYear() {
+        int month = 7;
+        int year = 2024;
+
+        CustomerRewards customerRewards1 = CustomerRewards.builder().customerId("c1").rewardsPoint(100).build();
+        CustomerRewards customerRewards2 = CustomerRewards.builder().customerId("c2").rewardsPoint(150).build();
+        Mockito.when(rewardsRepository.findRewardPointsByMonthAndYear(month, year))
+                .thenReturn(List.of(
+                        customerRewards1,
+                        customerRewards2
+                ));
+
+        Map<String, Double> rewardsByMonthAndYear = rewardsService.getRewardsByMonthAndYear(7, 2024);
+        Assertions.assertEquals(100, rewardsByMonthAndYear.get(customerRewards1.getCustomerId()));
+        Assertions.assertEquals(150, rewardsByMonthAndYear.get(customerRewards2.getCustomerId()));
     }
 }

@@ -5,7 +5,6 @@ import com.ecom.rewards.dto.RewardsReqDto;
 import com.ecom.rewards.services.RewardsService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +22,11 @@ import static com.ecom.rewards.utils.ControllerUtils.getErrorResponseEntity;
 @RequestMapping("/rewards")
 public class RewardsController {
 
-    @Autowired
-    private RewardsService rewardsService;
+    private final RewardsService rewardsService;
+
+    public RewardsController(RewardsService rewardsService) {
+        this.rewardsService = rewardsService;
+    }
 
     @GetMapping("/points/{month}/{year}")
     public ResponseEntity<Object> processRewardPoints(@Valid RewardsReqDto rewardsReqDto){
@@ -63,9 +65,7 @@ public class RewardsController {
         Map<String, Double> rewardPoints = rewardsService.processRewards(customerTransactions);
 
         var response = new ArrayList<>();
-        rewardPoints.forEach((custId, totalRewards) -> {
-            response.add(new RewardResponseDetails(custId, totalRewards));
-        });
+        rewardPoints.forEach((custId, totalRewards) -> response.add(new RewardResponseDetails(custId, totalRewards)));
         return ResponseEntity.ok(response);
     }
 }
