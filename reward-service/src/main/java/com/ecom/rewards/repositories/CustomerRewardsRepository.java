@@ -15,4 +15,12 @@ public interface CustomerRewardsRepository extends JpaRepository<CustomerRewards
     )
     List<CustomerRewards> findRewardPointsByMonthAndYear(@Param("monthValue") Integer month, @Param("yearValue") Integer year);
 
+    List<CustomerRewards> findRewardsPointsByCustomerId(@Param("customerId") String customerId);
+
+    @Query(
+            name = "CustomerRewards.findRewardsPointsByCustomerIdAndMonthAndYear",
+            value = "select cr from CustomerRewards cr where customerId=:customerId and month(cr.invoiceDate)=:monthValue and year(cr.invoiceDate)=:yearValue"
+    )
+    List<CustomerRewards> findRewardsPointsByCustomerIdAndMonthAndYear(@Param("customerId") String customerId, @Param("monthValue") Integer month, @Param("yearValue") Integer year);
+
 }

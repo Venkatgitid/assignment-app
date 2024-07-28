@@ -1,6 +1,7 @@
 package com.ecom.rewards.controllers;
 
 import com.ecom.rewards.dto.CustomerTransactionDto;
+import com.ecom.rewards.dto.RewardResponseDto;
 import com.ecom.rewards.dto.RewardsReqDto;
 import com.ecom.rewards.services.RewardsService;
 import jakarta.validation.Valid;
@@ -9,10 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.MessageFormat;
+import java.util.*;
 
 import static com.ecom.rewards.utils.ControllerUtils.getErrorResponseEntity;
 
@@ -26,16 +25,6 @@ public class RewardsController {
 
     public RewardsController(RewardsService rewardsService) {
         this.rewardsService = rewardsService;
-    }
-
-    @GetMapping("/points/{month}/{year}")
-    public ResponseEntity<Object> processRewardPoints(@Valid RewardsReqDto rewardsReqDto){
-        Map<String, Double> rewardPoints = rewardsService.getRewardsByMonthAndYear(rewardsReqDto.getMonth(), rewardsReqDto.getYear());
-
-        var response = new ArrayList<>();
-        rewardPoints.forEach((custId, totalRewards) -> response.add(new RewardResponseDetails(custId, totalRewards)));
-
-        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/cal-points")
@@ -65,10 +54,46 @@ public class RewardsController {
         Map<String, Double> rewardPoints = rewardsService.processRewards(customerTransactions);
 
         var response = new ArrayList<>();
-        rewardPoints.forEach((custId, totalRewards) -> response.add(new RewardResponseDetails(custId, totalRewards)));
+        rewardPoints.forEach((custId, totalRewards) -> response.add(new RewardResponseDto(custId, totalRewards)));
+        return ResponseEntity.ok(response);
+    }
+
+   @GetMapping("/pointsByCustomerId")
+    public ResponseEntity<Object> getRewardPointsByCustomerId(@RequestParam(name = "customerId") String customerId){
+        Map<String, Double> rewardPoints = rewardsService.getRewardsByCustomerId(customerId);
+
+        var response = new ArrayList<>();
+        rewardPoints.forEach((custId, totalRewards) -> response.add(new RewardResponseDto(custId, totalRewards)));
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/pointsByMonthAndYear/{month}/{year}")
+    public ResponseEntity<Object> getRewardPointsByMonthAndYear(@Valid RewardsReqDto rewardsReqDto){
+        Map<String, Double> rewardPoints = rewardsService.getRewardsByMonthAndYear(rewardsReqDto.getMonth(), rewardsReqDto.getYear());
+
+        var response = new LinkedList<>();
+        rewardPoints.forEach((custId, totalRewards) -> response.add(new RewardResponseDto(custId, totalRewards)));
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/pointsBy")
+    public ResponseEntity<Object> getRewardPointsByAllParam(@RequestParam(name = "customerId") String customerId,
+                                                      @RequestParam(name = "month", defaultValue = "0", required = false) int month,
+                                                      @RequestParam(name = "year", defaultValue = "0", required = false) int year){
+        if (month <= 0 || month > 12 || year <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(MessageFormat.format("Invalid month : {0} or year : {1}, month must be between 1 to 12 and year must be >= 2024", month, year));
+        }
+
+        Map<String, Double> rewardPoints = rewardsService.getRewardsByCustomerIdWithMonthAndYear(customerId, month, year);
+
+        var response = new ArrayList<>();
+        rewardPoints.forEach((custId, totalRewards) -> response.add(new RewardResponseDto(custId, totalRewards)));
+
         return ResponseEntity.ok(response);
     }
 }
 
 
-record RewardResponseDetails(String customerId, Double totalRewardPoints) {}

@@ -20,10 +20,10 @@ public class CustomerRewardsRepositoryTest {
     LocalDate currentDate = LocalDate.now();
     LocalDate previousMonthDate = LocalDate.now().minusMonths(1);
 
-    @Test
-    @DisplayName("Test 1:Save Customer Rewards Test")
+    @DisplayName("Test 1 : Save Customer Rewards")
     @Order(1)
     @Rollback(value = false)
+    @Test
     public void saveCustomerRewards(){
         CustomerRewards customerRewards1 = CustomerRewards.builder()
                 .customerId("c1")
@@ -52,9 +52,9 @@ public class CustomerRewardsRepositoryTest {
         customerRewardsRepository.save(customerRewards3);
     }
 
-    @Test
-    @DisplayName("Test 2:Fetch Customer Rewards Test")
+    @DisplayName("Test 2 : Fetch Customer Rewards")
     @Order(2)
+    @Test
     public void getCustomerRewards(){
         Optional<CustomerRewards> customerRewards = customerRewardsRepository.findById(1L);
         Assertions.assertTrue(customerRewards.isPresent());
@@ -63,11 +63,35 @@ public class CustomerRewardsRepositoryTest {
         Assertions.assertEquals(3, customerRewardsList.size());
     }
 
+    @DisplayName("Test 3 : Find Rewards Points By CustomerId")
+    @Order(3)
     @Test
-    @DisplayName("Test 3:Find RewardPoints By Month And Year")
-    @Order(2)
+    public void findRewardsPointsByCustomerId(){
+        List<CustomerRewards> customerRewards = customerRewardsRepository.findRewardsPointsByCustomerId("c1");
+        Assertions.assertEquals(2, customerRewards.size());
+    }
+
+    @DisplayName("Test 4 : Find Rewards Points By Month And Year")
+    @Order(4)
+    @Test
     public void findRewardPointsByMonthAndYear(){
         List<CustomerRewards> customerRewards = customerRewardsRepository.findRewardPointsByMonthAndYear(currentDate.getMonth().getValue(), currentDate.getYear());
         Assertions.assertEquals(2, customerRewards.size());
+    }
+
+    @DisplayName("Test 5 : Find Rewards Points By CustomerId With Month and Year")
+    @Order(5)
+    @Test
+    public void findRewardsPointsByCustomerIdAndMonthAndYear(){
+        List<CustomerRewards> customerRewards = customerRewardsRepository.findRewardsPointsByCustomerIdAndMonthAndYear("c2", previousMonthDate.getMonth().getValue(), previousMonthDate.getYear());
+        Assertions.assertEquals(1, customerRewards.size());
+    }
+
+    @DisplayName("Test 6 : Find Rewards Points By Unknown CustomerId")
+    @Order(6)
+    @Test
+    public void findRewardsPointsByUnknownCustomerId(){
+        List<CustomerRewards> customerRewards = customerRewardsRepository.findRewardsPointsByCustomerId("c12345");
+        Assertions.assertEquals(0, customerRewards.size());
     }
 }
